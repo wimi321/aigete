@@ -78,6 +78,8 @@ npm start
 - 工具输出和秘密外传倾向
 - 跨任务记忆污染
 - 导入 Codex 会话副本并编辑研究变体，不修改原始源文件
+- 检索文档和引用片段中的间接提示词注入
+- 角色混淆、结构化输出绕过、多语言混淆、记忆重激活等模式
 
 ## 核心能力
 
@@ -152,6 +154,16 @@ npm run benchmark
 
 - [docs/benchmarking_zh.md](docs/benchmarking_zh.md)
 - [docs/benchmarking.md](docs/benchmarking.md)
+
+## 模板设计原则
+
+AIGete 现在内置了更丰富的探针库，按提示词注入研究里常见的攻击类别组织：
+
+- PromptInject 里强调的目标劫持与提示词泄漏
+- HouYi 这类框架体现出来的攻击 harness 思路
+- Prompt Injector 这类工具里常见的大类测试集合
+
+这个仓库不会把社区里的现成 jailbreak 文案原样搬进来，而是把反复出现的风险模式抽象成更安全的研究模板，方便防守方测试系统，而不是变成复制粘贴式攻击词库。
 
 ## 架构
 

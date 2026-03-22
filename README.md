@@ -78,6 +78,8 @@ More detail:
 - tool-output and secret exfiltration behavior
 - memory poisoning behavior across tasks
 - offline session variant editing for imported Codex conversations without modifying the original source files
+- indirect prompt injection in retrieved documents and citations
+- role confusion, structured-output bypass, multilingual obfuscation, and memory reactivation patterns
 
 ## Core Features
 
@@ -152,6 +154,16 @@ More detail:
 
 - [docs/benchmarking.md](docs/benchmarking.md)
 - [docs/benchmarking_zh.md](docs/benchmarking_zh.md)
+
+## Template Philosophy
+
+AIGete now ships with a broader probe library organized around common attack classes seen in prompt-injection research:
+
+- goal hijacking and prompt leakage, as framed by PromptInject ([arXiv](https://arxiv.org/abs/2211.09527))
+- automated attack-harness thinking, as seen in HouYi ([GitHub](https://github.com/LLMSecurity/HouYi))
+- large categorized payload libraries for AI security testing, as seen in Prompt Injector ([GitHub](https://github.com/preambleai/prompt-injector))
+
+The repository intentionally does not mirror community jailbreak prompts verbatim. Instead, it turns recurring patterns into safer research templates that help defenders test systems without shipping a copy-paste jailbreak pack.
 
 ## Architecture
 
