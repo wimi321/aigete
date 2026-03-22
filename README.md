@@ -21,7 +21,30 @@ AIGete is designed around a beginner-first workflow:
 
 That is the center of the project. Advanced token routes, benchmark packs, and route management are still here, but they are no longer the first thing a new user has to understand.
 
-## 60-Second Start
+## One Command Start
+
+```bash
+npm run docker:start
+```
+
+Then open:
+
+- Web console: [http://127.0.0.1:3456](http://127.0.0.1:3456)
+
+This starts:
+
+- AIGete on `3456`
+- the mock upstream on `4000`
+
+It also mounts `~/.codex/sessions` into the container as read-only so the offline session lab can import copies safely.
+
+If you do not want Docker, use:
+
+```bash
+npm run lab
+```
+
+## 60-Second Local Start
 
 ```bash
 npm run mock
@@ -54,6 +77,7 @@ More detail:
 - prompt leakage with canary tokens
 - tool-output and secret exfiltration behavior
 - memory poisoning behavior across tasks
+- offline session variant editing for imported Codex conversations without modifying the original source files
 
 ## Core Features
 
@@ -146,6 +170,8 @@ flowchart LR
 Use AIGete only with systems, models, agents, and data you own or are explicitly authorized to test.
 
 This repository is for transparent security research, not stealth, evasion, or unauthorized exploitation.
+
+The session lab imports copies of local conversation files for analysis and variant drafting. It does not write changes back into your original editor session store.
 
 ## Roadmap
 

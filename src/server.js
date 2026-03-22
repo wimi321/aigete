@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { readdir } from 'node:fs/promises';
 import { experimentProfiles, listExperiments } from './experiments.js';
 import { scoreRequest, scoreResponse } from './detectors.js';
 import {
@@ -14,10 +15,17 @@ import {
   registerRoute,
   saveState,
   unregisterRoute,
+  getImportedSession,
+  listImportedSessions,
+  listVariants,
+  saveImportedSession,
+  saveVariant,
 } from './store.js';
+import { copyImportedSession, expandHome, isReadableSessionFile, parseSessionJsonl } from './session-lab.js';
 
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || 3456);
+const importedDir = path.join(process.cwd(), 'data', 'imported-sessions');
 
 await ensureStore();
 
@@ -46,6 +54,24 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && url.pathname === '/api/routes') {
       return sendJson(res, 200, { routes: await listRoutes() });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/session-lab') {
+      return sendJson(res, 200, {
+        sessions: await listImportedSessions(),
+        variants: await listVariants(),
+      });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/session-lab/import-latest') {
+      return handleImportLatest(req, res);
+    }
+    if (req.method === 'POST' && url.pathname === '/api/session-lab/import-file') {
+      return handleImportFile(req, res);
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/api/session-lab/')) {
+      return handleSessionLabDetail(req, res, url);
+    }
+    if (req.method === 'POST' && url.pathname === '/api/session-lab/variant') {
+      return handleSaveVariant(req, res);
     }
     if (req.method === 'POST' && url.pathname === '/__gw__/register') {
       return handleRegister(req, res, url);
@@ -82,6 +108,52 @@ async function handleRegister(req, res, url) {
   const route = await registerRoute(body.upstreamBaseUrl || body.upstream_base, body.note || '');
   const baseUrl = `http://${url.host}/v1/__gw__/t/${route.token}`;
   sendJson(res, 200, { token: route.token, baseUrl, route });
+}
+
+async function handleImportLatest(req, res) {
+  const body = await readJsonBody(req);
+  const sourceDir = expandHome(body.sourceDir || '~/.codex/sessions');
+  const limit = Math.min(Number(body.limit || 5), 20);
+  const files = await collectSessionFiles(sourceDir);
+  const latest = files.slice(0, limit);
+  const imported = [];
+  for (const file of latest) {
+    imported.push(await importSessionFromFile(file));
+  }
+  sendJson(res, 200, { imported });
+}
+
+async function handleImportFile(req, res) {
+  const body = await readJsonBody(req);
+  const sourcePath = expandHome(body.sourcePath || '');
+  if (!isReadableSessionFile(sourcePath)) {
+    return sendJson(res, 400, { error: 'sourcePath must point to a readable .jsonl file' });
+  }
+  const imported = await importSessionFromFile(sourcePath);
+  sendJson(res, 200, { imported });
+}
+
+async function handleSessionLabDetail(req, res, url) {
+  const id = url.pathname.replace('/api/session-lab/', '');
+  const session = await getImportedSession(id);
+  if (!session) return sendJson(res, 404, { error: 'session not found' });
+  sendJson(res, 200, { session });
+}
+
+async function handleSaveVariant(req, res) {
+  const body = await readJsonBody(req);
+  if (!body.sessionId || !Array.isArray(body.messages)) {
+    return sendJson(res, 400, { error: 'sessionId and messages are required' });
+  }
+  const variant = await saveVariant({
+    id: randomUUID(),
+    sessionId: body.sessionId,
+    name: body.name || `Variant ${new Date().toISOString()}`,
+    createdAt: new Date().toISOString(),
+    messages: body.messages,
+    analysis: scoreRequest({ messages: body.messages }, body.experiment || 'none'),
+  });
+  sendJson(res, 200, { variant });
 }
 
 async function handleLookup(req, res) {
@@ -397,6 +469,46 @@ function parseMaybeJson(rawText) {
   } catch {
     return rawText;
   }
+}
+
+async function collectSessionFiles(rootDir) {
+  const out = [];
+  await walk(rootDir, out);
+  return out.sort((a, b) => b.localeCompare(a));
+}
+
+async function walk(dir, out) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await walk(fullPath, out);
+      continue;
+    }
+    if (entry.isFile() && entry.name.endsWith('.jsonl')) out.push(fullPath);
+  }
+}
+
+async function importSessionFromFile(sourcePath) {
+  const parsed = await parseSessionJsonl(sourcePath);
+  const copied = await copyImportedSession(sourcePath, importedDir);
+  const imported = {
+    id: copied.id,
+    sourcePath,
+    importedAt: new Date().toISOString(),
+    storedPath: copied.destinationPath,
+    meta: parsed.meta,
+    messages: parsed.messages,
+    messageCount: parsed.messages.length,
+    preview: summarizeMessages(
+      parsed.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+    ),
+  };
+  await saveImportedSession(imported);
+  return imported;
 }
 
 function summarizeRequest(upstreamPath, payload) {

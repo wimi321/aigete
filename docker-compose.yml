@@ -1,0 +1,21 @@
+services:
+  aigete:
+    build: .
+    ports:
+      - "3456:3456"
+    environment:
+      HOST: 0.0.0.0
+    volumes:
+      - ./data:/app/data
+      - ~/.codex/sessions:/root/.codex/sessions:ro
+    depends_on:
+      - mock-upstream
+
+  mock-upstream:
+    image: node:22-alpine
+    working_dir: /app
+    command: ["node", "scripts/mock-upstream.js"]
+    volumes:
+      - ./:/app
+    ports:
+      - "4000:4000"

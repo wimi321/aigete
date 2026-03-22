@@ -18,10 +18,15 @@ const copyButtons = document.querySelectorAll('[data-copy-target]');
 const quickBaseEls = document.querySelectorAll('[data-base-url]');
 const quickClaudeEls = document.querySelectorAll('[data-claude-url]');
 const quickTokenEls = document.querySelectorAll('[data-token-url]');
+const labSessionsEl = document.querySelector('#lab-sessions');
+const variantNameEl = document.querySelector('#variantName');
+const variantMessagesEl = document.querySelector('#variantMessages');
+const variantStatusEl = document.querySelector('#variantStatus');
 
 let experiments = [];
 let state = null;
 let currentLang = getInitialLang();
+let selectedSessionId = null;
 
 const translations = {
   en: {
@@ -69,6 +74,14 @@ const translations = {
     experimentCatalog: 'Probe Library',
     experimentHint: 'Pick one probe and compare model behavior.',
     tokenRoutes: 'Advanced: Token Routes',
+    sessionLabTitle: 'Offline Session Lab',
+    sessionLabLede: 'Import recent Codex session copies, inspect visible user and assistant messages, and save safe research variants without touching the original editor files.',
+    importLatestSessions: 'Import Latest Codex Sessions',
+    variantName: 'Variant Name',
+    variantNamePlaceholder: 'My research variant',
+    variantMessages: 'Variant Messages JSON',
+    variantMessagesPlaceholder: '[{"role":"user","content":"..."}]',
+    saveVariant: 'Save Variant',
     refresh: 'Refresh',
     routeUpstreamBaseUrl: 'Upstream Base URL',
     routeUpstreamPlaceholder: 'https://example.com/v1',
@@ -84,6 +97,13 @@ const translations = {
     requestRiskPrefix: 'request',
     advancedLabel: 'Advanced',
     sessionsEmpty: 'No sessions yet. Run one request through the gateway and results will appear here.',
+    load: 'Load',
+    loadSessionFirst: 'Load a session first.',
+    invalidVariantJson: 'Messages JSON is invalid.',
+    variantSavedPrefix: 'Saved variant with request risk',
+    variantSavedSuffix: '',
+    variantSaveFailed: 'Unable to save variant.',
+    sessionCountUnit: 'messages',
   },
   zh: {
     title: 'AIGete',
@@ -130,6 +150,14 @@ const translations = {
     experimentCatalog: '探针库',
     experimentHint: '选择一个探针，对比模型行为。',
     tokenRoutes: '高级功能：Token 路由',
+    sessionLabTitle: '离线会话实验室',
+    sessionLabLede: '导入最近的 Codex 会话副本，只查看可见的用户与助手消息，并保存安全研究变体，不修改原始编辑器文件。',
+    importLatestSessions: '导入最近的 Codex 会话',
+    variantName: '变体名称',
+    variantNamePlaceholder: '我的研究变体',
+    variantMessages: '变体消息 JSON',
+    variantMessagesPlaceholder: '[{"role":"user","content":"..."}]',
+    saveVariant: '保存变体',
     refresh: '刷新',
     routeUpstreamBaseUrl: '上游 Base URL',
     routeUpstreamPlaceholder: 'https://example.com/v1',
@@ -145,11 +173,18 @@ const translations = {
     requestRiskPrefix: '请求',
     advancedLabel: '高级',
     sessionsEmpty: '还没有会话记录。先让一个请求经过网关，结果就会显示在这里。',
+    load: '载入',
+    loadSessionFirst: '请先载入一个会话。',
+    invalidVariantJson: '消息 JSON 格式无效。',
+    variantSavedPrefix: '已保存变体，请求风险为',
+    variantSavedSuffix: '',
+    variantSaveFailed: '保存变体失败。',
+    sessionCountUnit: '条消息',
   },
 };
 
 await loadState();
-await Promise.all([loadSessions(), loadRoutes()]);
+await Promise.all([loadSessions(), loadRoutes(), loadSessionLab()]);
 applyTranslations();
 updateQuickStartUrls();
 
@@ -157,6 +192,9 @@ document.querySelector('#save-state').addEventListener('click', saveState);
 document.querySelector('#refresh-sessions').addEventListener('click', loadSessions);
 document.querySelector('#refresh-routes').addEventListener('click', loadRoutes);
 routeForm.addEventListener('submit', createRoute);
+document.querySelector('#refresh-session-lab').addEventListener('click', loadSessionLab);
+document.querySelector('#import-latest-sessions').addEventListener('click', importLatestSessions);
+document.querySelector('#save-variant').addEventListener('click', saveVariant);
 
 for (const button of langButtons) {
   button.addEventListener('click', async () => {
@@ -270,6 +308,76 @@ async function createRoute(event) {
   await loadRoutes();
 }
 
+async function loadSessionLab() {
+  const response = await fetch('/api/session-lab');
+  const data = await response.json();
+  renderLabSessions(data.sessions || []);
+}
+
+async function importLatestSessions() {
+  await fetch('/api/session-lab/import-latest', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sourceDir: '~/.codex/sessions', limit: 8 }),
+  });
+  await loadSessionLab();
+}
+
+function renderLabSessions(sessions) {
+  labSessionsEl.innerHTML = '';
+  for (const session of sessions) {
+    const card = document.createElement('article');
+    card.className = 'route-card';
+    card.innerHTML = `
+      <div class="session-top">
+        <div>
+          <h3>${session.meta?.cwd || session.sourcePath}</h3>
+          <p class="timestamp">${new Date(session.importedAt).toLocaleString()}</p>
+        </div>
+        <button type="button" class="ghost">${t('load')}</button>
+      </div>
+      <p class="meta">${session.messageCount} ${t('sessionCountUnit')} | ${session.sourcePath}</p>
+      <pre class="preview">${session.preview || ''}</pre>
+    `;
+    card.querySelector('button').addEventListener('click', () => loadSessionIntoEditor(session));
+    labSessionsEl.appendChild(card);
+  }
+}
+
+function loadSessionIntoEditor(session) {
+  selectedSessionId = session.id;
+  variantNameEl.value = `Variant from ${pathLeaf(session.sourcePath)}`;
+  variantMessagesEl.value = JSON.stringify(session.messages, null, 2);
+  variantStatusEl.textContent = '';
+}
+
+async function saveVariant() {
+  if (!selectedSessionId) {
+    variantStatusEl.textContent = t('loadSessionFirst');
+    return;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(variantMessagesEl.value);
+  } catch {
+    variantStatusEl.textContent = t('invalidVariantJson');
+    return;
+  }
+  const response = await fetch('/api/session-lab/variant', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: selectedSessionId,
+      name: variantNameEl.value.trim(),
+      messages: parsed,
+    }),
+  });
+  const data = await response.json();
+  variantStatusEl.textContent = data.variant
+    ? `${t('variantSavedPrefix')} ${data.variant.analysis.level} (${data.variant.analysis.score}).${t('variantSavedSuffix')}`
+    : t('variantSaveFailed');
+}
+
 function renderExperimentOptions(active) {
   stateEls.activeExperiment.innerHTML = experiments
     .map((item) => `<option value="${item.id}" ${item.id === active ? 'selected' : ''}>${getExperimentLabel(item.id)}</option>`)
@@ -333,4 +441,8 @@ function getInitialLang() {
 
 function t(key) {
   return translations[currentLang][key] || translations.en[key] || key;
+}
+
+function pathLeaf(input) {
+  return input.split('/').pop();
 }

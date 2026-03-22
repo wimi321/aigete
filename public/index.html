@@ -93,6 +93,36 @@
         </div>
       </section>
 
+      <section class="panel session-lab">
+        <div class="section-copy">
+          <h2 data-i18n="sessionLabTitle">Offline Session Lab</h2>
+          <p class="sublede" data-i18n="sessionLabLede">Import recent Codex session copies, inspect extracted messages, and save safe research variants without touching the original editor files.</p>
+        </div>
+        <div class="action-row">
+          <button id="import-latest-sessions" type="button" data-i18n="importLatestSessions">Import Latest Codex Sessions</button>
+          <button id="refresh-session-lab" type="button" class="ghost" data-i18n="refresh">Refresh</button>
+        </div>
+        <div class="lab-grid">
+          <div>
+            <div id="lab-sessions" class="session-list"></div>
+          </div>
+          <div class="lab-editor">
+            <label>
+              <span data-i18n="variantName">Variant Name</span>
+              <input id="variantName" data-i18n-placeholder="variantNamePlaceholder" placeholder="My research variant" />
+            </label>
+            <label>
+              <span data-i18n="variantMessages">Variant Messages JSON</span>
+              <textarea id="variantMessages" rows="18" data-i18n-placeholder="variantMessagesPlaceholder" placeholder='[{"role":"user","content":"..."}]'></textarea>
+            </label>
+            <div class="action-row">
+              <button id="save-variant" type="button" data-i18n="saveVariant">Save Variant</button>
+              <span id="variantStatus" class="meta"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel controls">
         <div class="section-copy">
           <h2 data-i18n="beginnerTitle">Beginner Setup</h2>

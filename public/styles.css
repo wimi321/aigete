@@ -66,7 +66,8 @@ body {
 }
 
 .controls,
-.experiments {
+.experiments,
+.session-lab {
   grid-column: span 6;
 }
 
@@ -204,19 +205,26 @@ label {
 input,
 select,
 button,
+textarea,
 code,
 pre {
   font: inherit;
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.88);
   color: var(--text);
   padding: 14px 16px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 260px;
 }
 
 button {
@@ -322,6 +330,20 @@ code {
   font-weight: 600;
 }
 
+.lab-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.lab-editor {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: var(--panel-strong);
+  padding: 20px;
+}
+
 .details-panel summary::-webkit-details-marker {
   display: none;
 }
@@ -341,6 +363,7 @@ code {
 @media (max-width: 980px) {
   .controls,
   .experiments,
+  .session-lab,
   .routes,
   .sessions,
   .hero,
@@ -350,7 +373,8 @@ code {
   }
 
   .steps,
-  .client-grid {
+  .client-grid,
+  .lab-grid {
     grid-template-columns: 1fr;
   }
 
