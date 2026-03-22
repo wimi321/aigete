@@ -3,96 +3,165 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AIGete Prompt Injection Research Console</title>
+    <title>AIGete</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="backdrop"></div>
     <main class="layout">
       <section class="hero panel">
-        <p class="eyebrow">Authorized Security Research Only</p>
-        <h1>AIGete Prompt Injection Research Console</h1>
-        <p class="lede">
-          一个参考 AegisGate 设计的本地安全研究网关：放在 Codex、Claude Code、OpenCode 与上游模型之间，注入可控实验提示词，观测越权、泄漏与记忆污染风险。
-        </p>
-        <div class="hero-grid">
-          <div>
-            <span class="metric-label">OpenAI</span>
-            <strong>/v1/chat/completions</strong>
+        <div class="hero-top">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="heroEyebrow">Authorized Security Research Only</p>
+            <h1 data-i18n="heroTitle">Prompt Injection Research, Made Simple.</h1>
+            <p class="lede" data-i18n="heroLede">
+              在客户端和模型之间放一个本地网关，打开一个实验模板，就能观察模型是否会泄漏隐藏提示词、接受恶意覆盖，或把污染内容带到后续任务里。
+            </p>
           </div>
-          <div>
-            <span class="metric-label">Anthropic</span>
-            <strong>/v1/messages</strong>
-          </div>
-          <div>
-            <span class="metric-label">Token Mode</span>
-            <strong>/v1/__gw__/t/&lt;token&gt;</strong>
+          <div class="lang-switch" aria-label="Language Switch">
+            <button type="button" class="ghost lang-btn" data-lang="zh">中文</button>
+            <button type="button" class="ghost lang-btn" data-lang="en">EN</button>
           </div>
         </div>
       </section>
 
+      <section class="quickstart panel">
+        <div class="section-copy">
+          <p class="eyebrow" data-i18n="quickBadge">60-second setup</p>
+          <h2 data-i18n="quickTitle">Three steps. No maze.</h2>
+          <p class="sublede" data-i18n="quickLede">
+            Start the mock upstream, start AIGete, then point Codex, Claude Code, or OpenCode at the gateway.
+          </p>
+        </div>
+        <div class="steps">
+          <article class="step-card">
+            <p class="step-title" data-i18n="stepOneTitle">1. Start the lab</p>
+            <p class="step-body" data-i18n="stepOneBody">Run the mock upstream and the gateway locally.</p>
+            <div class="command-group">
+              <code id="cmd-mock">npm run mock</code>
+              <button type="button" class="ghost" data-copy-target="cmd-mock" data-i18n="copy">Copy</button>
+            </div>
+            <div class="command-group">
+              <code id="cmd-start">npm start</code>
+              <button type="button" class="ghost" data-copy-target="cmd-start" data-i18n="copy">Copy</button>
+            </div>
+          </article>
+          <article class="step-card">
+            <p class="step-title" data-i18n="stepTwoTitle">2. Leave defaults alone</p>
+            <p class="step-body" data-i18n="stepTwoBody">The default upstream already points at the local mock server, so new users can test without extra setup.</p>
+          </article>
+          <article class="step-card">
+            <p class="step-title" data-i18n="stepThreeTitle">3. Paste one URL</p>
+            <p class="step-body" data-i18n="stepThreeBody">Use the OpenAI-style URL for Codex and OpenCode, or the Anthropic-style URL for Claude Code.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="clients panel">
+        <div class="section-copy">
+          <h2 data-i18n="clientsTitle">Connect Your Client</h2>
+          <p class="sublede" data-i18n="clientsLede">Use the same local gateway for the mainstream coding-agent workflows.</p>
+        </div>
+        <div class="client-grid">
+          <article class="client-card">
+            <p class="client-name" data-i18n="codexTitle">Codex</p>
+            <p class="client-body" data-i18n="codexBody">Use an OpenAI-compatible provider and paste this as the base URL.</p>
+            <span class="mini-label" data-i18n="openAiBase">OpenAI-compatible base URL</span>
+            <div class="command-group">
+              <code id="quick-openai" data-base-url>http://127.0.0.1:3456/v1</code>
+              <button type="button" class="ghost" data-copy-target="quick-openai" data-i18n="copy">Copy</button>
+            </div>
+          </article>
+          <article class="client-card">
+            <p class="client-name" data-i18n="claudeTitle">Claude Code</p>
+            <p class="client-body" data-i18n="claudeBody">Use the Anthropic-style endpoint below for messages and token counting.</p>
+            <span class="mini-label" data-i18n="anthropicEndpoint">Anthropic endpoint</span>
+            <div class="command-group">
+              <code id="quick-claude" data-claude-url>http://127.0.0.1:3456/v1/messages</code>
+              <button type="button" class="ghost" data-copy-target="quick-claude" data-i18n="copy">Copy</button>
+            </div>
+          </article>
+          <article class="client-card">
+            <p class="client-name" data-i18n="openCodeTitle">OpenCode</p>
+            <p class="client-body" data-i18n="openCodeBody">Use OpenAI-compatible mode with the same base URL as Codex.</p>
+            <span class="mini-label" data-i18n="tokenRouteBase">Token route base URL</span>
+            <div class="command-group">
+              <code id="quick-token" data-token-url>http://127.0.0.1:3456/v1/__gw__/t/&lt;TOKEN&gt;</code>
+              <button type="button" class="ghost" data-copy-target="quick-token" data-i18n="copy">Copy</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="panel controls">
+        <div class="section-copy">
+          <h2 data-i18n="beginnerTitle">Beginner Setup</h2>
+          <p class="sublede" data-i18n="beginnerLede">Most users only need these fields. Save once, then start testing.</p>
+        </div>
         <div class="section-head">
-          <h2>Gateway Config</h2>
-          <button id="save-state">Save</button>
+          <h3 data-i18n="gatewayConfig">Gateway Config</h3>
+          <button id="save-state" data-i18n="save">Save</button>
         </div>
         <label>
-          Direct Upstream Base URL
-          <input id="upstreamBaseUrl" placeholder="http://127.0.0.1:4000/v1" />
+          <span data-i18n="directUpstreamBaseUrl">Direct Upstream Base URL</span>
+          <input id="upstreamBaseUrl" data-i18n-placeholder="upstreamPlaceholder" placeholder="http://127.0.0.1:4000/v1" />
         </label>
         <label>
-          Default Upstream API Key
-          <input id="apiKey" type="password" placeholder="Optional bearer token" />
+          <span data-i18n="defaultApiKey">Default Upstream API Key</span>
+          <input id="apiKey" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="Optional bearer token" />
         </label>
         <label>
-          Active Experiment
+          <span data-i18n="activeExperiment">Active Experiment</span>
           <select id="activeExperiment"></select>
         </label>
         <label>
-          Canary Token
-          <input id="canaryToken" placeholder="AG_CANARY_7F3A" />
+          <span data-i18n="canaryToken">Canary Token</span>
+          <input id="canaryToken" data-i18n-placeholder="canaryPlaceholder" placeholder="AG_CANARY_7F3A" />
         </label>
         <label class="toggle">
           <input id="enabled" type="checkbox" />
-          <span>Enable injection research mode</span>
+          <span data-i18n="enableInjection">Enable injection research mode</span>
         </label>
         <div class="gateway-key">
-          <span class="metric-label">Gateway Key</span>
+          <span class="mini-label" data-i18n="gatewayKey">Gateway Key</span>
           <code id="gatewayKey"></code>
         </div>
       </section>
 
       <section class="panel experiments">
-        <div class="section-head">
-          <h2>Experiment Catalog</h2>
-          <span class="hint">基线、提示词泄漏、工具外传、记忆污染</span>
+        <div class="section-copy">
+          <h2 data-i18n="experimentCatalog">Probe Library</h2>
+          <p class="sublede" data-i18n="experimentHint">Pick one probe and compare model behavior.</p>
         </div>
         <div id="experiment-list" class="experiment-list"></div>
       </section>
 
-      <section class="panel routes">
-        <div class="section-head">
-          <h2>Token Routes</h2>
-          <button id="refresh-routes" class="ghost">Refresh</button>
-        </div>
+      <details class="panel routes details-panel">
+        <summary>
+          <span data-i18n="tokenRoutes">Advanced: Token Routes</span>
+          <span class="summary-note" data-i18n="advancedLabel">Advanced</span>
+        </summary>
         <form id="route-form" class="route-form">
           <label>
-            Upstream Base URL
-            <input id="routeUpstreamBaseUrl" placeholder="https://example.com/v1" />
+            <span data-i18n="routeUpstreamBaseUrl">Upstream Base URL</span>
+            <input id="routeUpstreamBaseUrl" data-i18n-placeholder="routeUpstreamPlaceholder" placeholder="https://example.com/v1" />
           </label>
           <label>
-            Note
-            <input id="routeNote" placeholder="codex-lab / claude-code / opencode" />
+            <span data-i18n="note">Note</span>
+            <input id="routeNote" data-i18n-placeholder="routeNotePlaceholder" placeholder="team-lab / claude-code / prod-shadow" />
           </label>
-          <button>Create Route</button>
+          <div class="action-row">
+            <button data-i18n="createRoute">Create Route</button>
+            <button id="refresh-routes" type="button" class="ghost" data-i18n="refresh">Refresh</button>
+          </div>
         </form>
         <div id="routes" class="route-list"></div>
-      </section>
+      </details>
 
       <section class="panel sessions">
         <div class="section-head">
-          <h2>Recent Sessions</h2>
-          <button id="refresh-sessions" class="ghost">Refresh</button>
+          <h2 data-i18n="recentSessions">Recent Sessions</h2>
+          <button id="refresh-sessions" class="ghost" data-i18n="refresh">Refresh</button>
         </div>
         <div id="sessions" class="session-list"></div>
       </section>

@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "mock": "node scripts/mock-upstream.js",
-    "check": "node --check src/server.js && node --check src/experiments.js && node --check src/detectors.js && node --check src/store.js && node --check scripts/mock-upstream.js"
+    "benchmark": "node scripts/run-benchmark.js",
+    "check": "node --check src/server.js && node --check src/experiments.js && node --check src/detectors.js && node --check src/store.js && node --check scripts/mock-upstream.js && node --check scripts/run-benchmark.js"
   },
   "keywords": [
     "prompt-injection",

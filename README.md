@@ -1,72 +1,84 @@
 # AIGete
 
-AIGete is a local-first prompt injection security research gateway for authorized testing of AI coding agents and model clients.
+[English](README.md) | [中文](README_zh.md)
 
-It is inspired by two strong references:
+Prompt injection research should not feel like assembling lab equipment from scratch.
 
-- [AegisGate](https://github.com/ax128/AegisGate): gateway-first architecture, token routing, multi-client compatibility
-- [SillyTavern](https://github.com/SillyTavern/SillyTavern): approachable web console and fast local experimentation
+AIGete is a local-first security research gateway that sits between your coding client and your model API. Point Codex, Claude Code, or OpenCode at one local address, switch on a probe, and AIGete shows whether the model leaks hidden instructions, obeys malicious overrides, or carries poisoned memory forward.
 
-## Why This Project Exists
+Inspired by:
 
-When people test prompt injection defenses, they often have to modify each client separately. AIGete moves that work into a single proxy layer so you can run the same experiment across:
+- [AegisGate](https://github.com/ax128/AegisGate) for the gateway-first architecture and token routing model
+- [SillyTavern](https://github.com/SillyTavern/SillyTavern) for the idea that local AI tooling should still feel friendly and immediate
 
-- Codex and other OpenAI-compatible clients
-- Claude Code and other Anthropic-style clients
-- OpenCode-style OpenAI-compatible workflows
+## Why It Feels Simpler
 
-The project is intentionally defensive: it helps you measure whether a model leaks hidden instructions, obeys lower-priority injected text, assists with secret exfiltration, or stores malicious instructions as durable memory.
+AIGete is designed around a beginner-first workflow:
 
-## Current Features
+1. start the local mock upstream
+2. start AIGete
+3. paste one base URL into your client
 
-- OpenAI-compatible proxy paths
+That is the center of the project. Advanced token routes, benchmark packs, and route management are still here, but they are no longer the first thing a new user has to understand.
+
+## 60-Second Start
+
+```bash
+npm run mock
+npm start
+```
+
+Then open:
+
+- Web console: [http://127.0.0.1:3456](http://127.0.0.1:3456)
+
+Default local URLs:
+
+- OpenAI-compatible base URL: `http://127.0.0.1:3456/v1`
+- Claude / Anthropic endpoint: `http://127.0.0.1:3456/v1/messages`
+
+## What You Can Point At It
+
+- Codex: OpenAI-compatible mode
+- Claude Code: `messages` / `count_tokens`
+- OpenCode: OpenAI-compatible mode
+
+More detail:
+
+- [docs/clients.md](docs/clients.md)
+- [docs/clients_zh.md](docs/clients_zh.md)
+
+## What It Tests
+
+- instruction hierarchy override
+- prompt leakage with canary tokens
+- tool-output and secret exfiltration behavior
+- memory poisoning behavior across tasks
+
+## Core Features
+
+- OpenAI-compatible gateway
   - `POST /v1/chat/completions`
   - `POST /v1/responses`
-  - generic `/v1/...` forwarding for OpenAI-style clients
-- Anthropic-compatible proxy paths
+  - generic `/v1/...` forwarding
+- Anthropic-compatible gateway
   - `POST /v1/messages`
   - `POST /v1/messages/count_tokens`
-  - streaming passthrough for SSE responses
+  - SSE streaming passthrough
 - AegisGate-style token routing
   - `POST /__gw__/register`
   - `POST /__gw__/lookup`
   - `POST /__gw__/unregister`
-  - `http://127.0.0.1:3456/v1/__gw__/t/<TOKEN>` base URL format
-- Research experiments
-  - baseline passthrough
-  - hierarchy override probes
-  - prompt leak canary tests
-  - tool-secret exfiltration probes
-  - memory poisoning probes
-- Risk scoring and audit trail
-  - request-side keyword hits
-  - response-side leak hits and canary exposure detection
-  - refusal-aware scoring to separate successful defense from dangerous compliance
-- Web console
-  - direct upstream configuration
-  - experiment selection
-  - token route management
-  - recent session review
-
-## Quick Start
-
-### 1. Start a mock upstream
-
-```bash
-npm run mock
-```
-
-### 2. Start AIGete
-
-```bash
-npm start
-```
-
-### 3. Open the console
-
-[http://127.0.0.1:3456](http://127.0.0.1:3456)
-
-Default direct upstream base is `http://127.0.0.1:4000/v1`, so the mock server works out of the box.
+  - `http://127.0.0.1:3456/v1/__gw__/t/<TOKEN>`
+- Beginner-friendly web console
+  - copyable client URLs
+  - simple default config
+  - bilingual UI
+  - advanced route management behind a secondary panel
+- Repeatable benchmark runs
+  - committed attack packs
+  - CLI runner
+  - JSON report output for CI
 
 ## Example Requests
 
@@ -104,42 +116,25 @@ curl 'http://127.0.0.1:3456/v1/messages?anthropic-version=2023-06-01' \
   }'
 ```
 
-## Client Compatibility
-
-- Codex: use OpenAI-compatible mode with `http://127.0.0.1:3456/v1`
-- Claude Code: use `/v1/messages` and `/v1/messages/count_tokens`
-- OpenCode: use OpenAI-compatible mode with direct or token base URL
-
-More detail: [docs/clients.md](docs/clients.md)
-
-## Token Mode
-
-Create a token-bound upstream route from the web console or API:
+## Benchmark Packs
 
 ```bash
-curl http://127.0.0.1:3456/__gw__/register \
-  -H 'content-type: application/json' \
-  -d '{
-    "upstreamBaseUrl": "http://127.0.0.1:4000/v1",
-    "gatewayKey": "<GATEWAY_KEY>",
-    "note": "codex-lab"
-  }'
+npm run benchmark
 ```
 
-The response includes a route like:
+This executes the default pack in [datasets/attack-packs/core.json](/Users/haoc/Developer/aigete/datasets/attack-packs/core.json) and writes a JSON report to `reports/latest.json`.
 
-```text
-http://127.0.0.1:3456/v1/__gw__/t/<TOKEN>
-```
+More detail:
 
-That base URL can be used directly by OpenAI-compatible clients.
+- [docs/benchmarking.md](docs/benchmarking.md)
+- [docs/benchmarking_zh.md](docs/benchmarking_zh.md)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
     A[Codex / Claude Code / OpenCode] --> B[AIGete Gateway]
-    B --> C[Prompt Injection Experiment Engine]
+    B --> C[Probe Injection Engine]
     C --> D[Risk Scoring + Canary Detection]
     D --> E[Session Audit Log]
     B --> F[Direct Upstream or Token Route]
@@ -150,4 +145,9 @@ flowchart LR
 
 Use AIGete only with systems, models, agents, and data you own or are explicitly authorized to test.
 
-This repository focuses on transparent security research, not stealth, evasion, or unauthorized exploitation.
+This repository is for transparent security research, not stealth, evasion, or unauthorized exploitation.
+
+## Roadmap
+
+- [ROADMAP.md](ROADMAP.md)
+- [ROADMAP_zh.md](ROADMAP_zh.md)
