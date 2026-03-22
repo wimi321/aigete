@@ -1,0 +1,24 @@
+{
+  "name": "aigete",
+  "version": "0.2.0",
+  "description": "Prompt injection security research gateway for authorized local testing across Codex, Claude Code, and OpenCode-style clients.",
+  "type": "module",
+  "private": false,
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "mock": "node scripts/mock-upstream.js",
+    "check": "node --check src/server.js && node --check src/experiments.js && node --check src/detectors.js && node --check src/store.js && node --check scripts/mock-upstream.js"
+  },
+  "keywords": [
+    "prompt-injection",
+    "llm-security",
+    "codex",
+    "claude-code",
+    "anthropic",
+    "openai-compatible",
+    "security-research",
+    "ai-safety"
+  ],
+  "license": "MIT"
+}

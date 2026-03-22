@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIGete Prompt Injection Research Console</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <main class="layout">
+      <section class="hero panel">
+        <p class="eyebrow">Authorized Security Research Only</p>
+        <h1>AIGete Prompt Injection Research Console</h1>
+        <p class="lede">
+          一个参考 AegisGate 设计的本地安全研究网关：放在 Codex、Claude Code、OpenCode 与上游模型之间，注入可控实验提示词，观测越权、泄漏与记忆污染风险。
+        </p>
+        <div class="hero-grid">
+          <div>
+            <span class="metric-label">OpenAI</span>
+            <strong>/v1/chat/completions</strong>
+          </div>
+          <div>
+            <span class="metric-label">Anthropic</span>
+            <strong>/v1/messages</strong>
+          </div>
+          <div>
+            <span class="metric-label">Token Mode</span>
+            <strong>/v1/__gw__/t/&lt;token&gt;</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel controls">
+        <div class="section-head">
+          <h2>Gateway Config</h2>
+          <button id="save-state">Save</button>
+        </div>
+        <label>
+          Direct Upstream Base URL
+          <input id="upstreamBaseUrl" placeholder="http://127.0.0.1:4000/v1" />
+        </label>
+        <label>
+          Default Upstream API Key
+          <input id="apiKey" type="password" placeholder="Optional bearer token" />
+        </label>
+        <label>
+          Active Experiment
+          <select id="activeExperiment"></select>
+        </label>
+        <label>
+          Canary Token
+          <input id="canaryToken" placeholder="AG_CANARY_7F3A" />
+        </label>
+        <label class="toggle">
+          <input id="enabled" type="checkbox" />
+          <span>Enable injection research mode</span>
+        </label>
+        <div class="gateway-key">
+          <span class="metric-label">Gateway Key</span>
+          <code id="gatewayKey"></code>
+        </div>
+      </section>
+
+      <section class="panel experiments">
+        <div class="section-head">
+          <h2>Experiment Catalog</h2>
+          <span class="hint">基线、提示词泄漏、工具外传、记忆污染</span>
+        </div>
+        <div id="experiment-list" class="experiment-list"></div>
+      </section>
+
+      <section class="panel routes">
+        <div class="section-head">
+          <h2>Token Routes</h2>
+          <button id="refresh-routes" class="ghost">Refresh</button>
+        </div>
+        <form id="route-form" class="route-form">
+          <label>
+            Upstream Base URL
+            <input id="routeUpstreamBaseUrl" placeholder="https://example.com/v1" />
+          </label>
+          <label>
+            Note
+            <input id="routeNote" placeholder="codex-lab / claude-code / opencode" />
+          </label>
+          <button>Create Route</button>
+        </form>
+        <div id="routes" class="route-list"></div>
+      </section>
+
+      <section class="panel sessions">
+        <div class="section-head">
+          <h2>Recent Sessions</h2>
+          <button id="refresh-sessions" class="ghost">Refresh</button>
+        </div>
+        <div id="sessions" class="session-list"></div>
+      </section>
+    </main>
+
+    <template id="session-template">
+      <article class="session-card">
+        <div class="session-top">
+          <div>
+            <h3></h3>
+            <p class="timestamp"></p>
+          </div>
+          <span class="pill"></span>
+        </div>
+        <p class="meta"></p>
+        <pre class="preview request"></pre>
+        <pre class="preview response"></pre>
+      </article>
+    </template>
+
+    <template id="route-template">
+      <article class="route-card">
+        <div class="session-top">
+          <div>
+            <h3 class="route-note"></h3>
+            <p class="timestamp route-time"></p>
+          </div>
+          <span class="pill low">TOKEN</span>
+        </div>
+        <p class="meta route-upstream"></p>
+        <pre class="preview route-base"></pre>
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
